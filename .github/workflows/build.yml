@@ -2,28 +2,35 @@ name: Build Jarvis APK
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Build with Buildozer (Docker)
         run: |
-          docker run --rm -v ${{ github.workspace }}:/home/user/hostcwd kivy/buildozer \
-          buildozer -v android debug
+          docker run --rm -v ${{ github.workspace }}:/home/user/hostcwd \
+            kivy/buildozer:stable buildozer android debug
 
       - name: Rename APK
         run: |
           mkdir -p output
-          mv bin/*.apk output/Jarvis.apk
+          cp .buildozer/android/platform/build/dists/*/bin/*.apk output/Jarvis.apk
 
-      - name: Upload APK
+      - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Jarvis-APK
           path: output/Jarvis.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: output/Jarvis.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
