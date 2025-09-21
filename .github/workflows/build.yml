@@ -12,28 +12,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
+      - name: Build with Buildozer (Docker)
         run: |
-          sudo apt update
-          sudo apt install -y build-essential git zip unzip openjdk-17-jdk python3-pip
-          pip install --upgrade pip
-          pip install buildozer cython virtualenv
-
-      - name: Initialize buildozer
-        run: |
-          buildozer init || true
-
-      - name: Build APK
-        run: |
+          docker run --rm -v ${{ github.workspace }}:/home/user/hostcwd kivy/buildozer \
           buildozer -v android debug
+
+      - name: Rename APK
+        run: |
+          mkdir -p output
+          mv bin/*.apk output/Jarvis.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Jarvis-APK
-          path: bin/*.apk
+          path: output/Jarvis.apk
