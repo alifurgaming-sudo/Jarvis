@@ -13,28 +13,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip python3-setuptools git zip \
-              openjdk-17-jdk unzip libncurses5 build-essential ccache \
-              libffi-dev libssl-dev autoconf libtool pkg-config zlib1g-dev \
-              libjpeg-dev libpng-dev
-
+          sudo apt-get update
+          sudo apt-get install -y python3-pip python3-setuptools git zip unzip openjdk-17-jdk
           pip install --upgrade pip
           pip install buildozer cython
 
       - name: Build APK
         run: |
-          buildozer android debug
-
-      - name: Rename APK
-        run: |
-          mkdir -p output
-          cp .buildozer/android/platform/build/dists/*/bin/*.apk output/Jarvis.apk || true
+          buildozer android debug || (echo "---- Buildozer log ----" && find .buildozer -name "*.log" -exec cat {} \; && exit 1)
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Jarvis-APK
-          path: output/Jarvis.apk
+          path: bin/*.apk
