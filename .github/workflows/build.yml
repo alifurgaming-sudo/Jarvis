@@ -19,7 +19,7 @@ jobs:
             kivy/buildozer buildozer android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Jarvis-APK
           path: bin/*.apk
