@@ -12,22 +12,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Install dependencies
+    - name: Set up dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install cython
+        sudo apt-get update
+        sudo apt-get install -y git zip unzip openjdk-17-jdk python3 python3-pip python3-setuptools
+        pip install --upgrade cython buildozer
 
-    - name: Build with Buildozer
-      uses: kivy/buildozer-action@v1
-      with:
-        workdir: .
-        buildozer_version: stable
-        build_dir: buildozer
+    - name: Build APK
+      run: |
+        buildozer init
+        sed -i 's/source.main =.*/source.main = jarvis_app.py/' buildozer.spec
+        sed -i 's/requirements =.*/requirements = python3,kivy,plyer,gtts,requests,wikipedia/' buildozer.spec
+        sed -i 's/android.api =.*/android.api = 33/' buildozer.spec
+        sed -i 's/android.minapi =.*/android.minapi = 21/' buildozer.spec
+        buildozer -v android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
