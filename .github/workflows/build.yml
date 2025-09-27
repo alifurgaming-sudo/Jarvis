@@ -20,7 +20,7 @@ jobs:
 
     - name: Build APK
       run: |
-        buildozer init
+        # Adjust your spec if needed
         sed -i 's/source.main =.*/source.main = jarvis_app.py/' buildozer.spec
         sed -i 's/requirements =.*/requirements = python3,kivy,plyer,gtts,requests,wikipedia/' buildozer.spec
         sed -i 's/android.api =.*/android.api = 33/' buildozer.spec
