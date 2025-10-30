@@ -1,42 +1,39 @@
 name: Build Jarvis APK
 
 on:
-  push:
-    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-22.04
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git zip unzip openjdk-17-jdk python3 python3-pip python3-setuptools wget
-        pip install --upgrade cython buildozer
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk python3 python3-pip python3-venv libffi-dev libssl-dev liblzma-dev
+          pip install --upgrade pip
+          pip install buildozer cython virtualenv
 
-    - name: Install Android SDK
-      run: |
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdtools.zip
-        mkdir -p $HOME/android-sdk/cmdline-tools
-        unzip -q cmdtools.zip -d $HOME/android-sdk/cmdline-tools
-        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-        export ANDROID_HOME=$HOME/android-sdk
-        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-        yes | sdkmanager --licenses
-        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+      - name: Initialize buildozer
+        run: |
+          buildozer init || true
+          sed -i 's/source.include_exts =.*/source.include_exts = py,mp3,kv,png,jpg,ttf/' buildozer.spec
+          sed -i 's/requirements =.*/requirements = python3,kivy,plyer,gtts,requests,wikipedia/' buildozer.spec
+          sed -i 's/# *android.api =.*/android.api = 33/' buildozer.spec
+          sed -i 's/# *android.minapi =.*/android.minapi = 21/' buildozer.spec
+          sed -i 's/# *android.sdk =.*/android.sdk = 33/' buildozer.spec
+          sed -i 's/# *android.ndk =.*/android.ndk = 25b/' buildozer.spec
+          sed -i 's/source.main =.*/source.main = jarvis_app.py/' buildozer.spec
 
-    - name: Build APK
-      run: |
-        export ANDROID_HOME=$HOME/android-sdk
-        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-        buildozer -v android debug
+      - name: Build APK
+        run: |
+          buildozer android debug
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: Jarvis-APK
-        path: bin/*.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jarvis-APK
+          path: bin/*.apk
