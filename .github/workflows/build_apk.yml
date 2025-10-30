@@ -1,0 +1,40 @@
+name: Build Jarvis APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Buildozer
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk python3 python3-pip python3-venv
+          pip install buildozer cython virtualenv
+
+      - name: Initialize buildozer
+        run: |
+          buildozer init
+          sed -i 's/source.include_exts =.*/source.include_exts = py,mp3,kv,png,jpg,ttf/' buildozer.spec
+          sed -i 's/requirements =.*/requirements = python3,kivy,plyer,gtts,requests,wikipedia/' buildozer.spec
+          sed -i 's/# *android.api =.*/android.api = 33/' buildozer.spec
+          sed -i 's/# *android.minapi =.*/android.minapi = 21/' buildozer.spec
+          sed -i 's/# *android.sdk =.*/android.sdk = 33/' buildozer.spec
+          sed -i 's/# *android.ndk =.*/android.ndk = 25b/' buildozer.spec
+          sed -i 's/source.main =.*/source.main = jarvis_app.py/' buildozer.spec
+
+      - name: Build APK
+        run: |
+          buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jarvis-APK
+          path: bin/*.apk
