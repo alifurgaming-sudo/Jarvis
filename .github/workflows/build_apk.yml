@@ -20,7 +20,6 @@ jobs:
 
       - name: Initialize buildozer
         run: |
-          buildozer init
           sed -i 's/source.include_exts =.*/source.include_exts = py,mp3,kv,png,jpg,ttf/' buildozer.spec
           sed -i 's/requirements =.*/requirements = python3,kivy,plyer,gtts,requests,wikipedia/' buildozer.spec
           sed -i 's/# *android.api =.*/android.api = 33/' buildozer.spec
