@@ -2,24 +2,45 @@ name: Build Jarvis APK
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Buildozer
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk python3 python3-pip python3-venv
-          pip install buildozer cython virtualenv
+          sudo apt install -y python3-pip git zip unzip openjdk-17-jdk
+          pip install --upgrade pip setuptools wheel buildozer cython virtualenv
 
-      - name: Initialize buildozer
+      - name: Set up Android SDK
         run: |
+          mkdir -p $HOME/android-sdk
+          export ANDROID_SDK_ROOT=$HOME/android-sdk
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Verify SDK setup
+        run: |
+          sdkmanager --list | head -n 40
+
+      - name: Initialize Buildozer
+        run: |
+          if [ ! -f buildozer.spec ]; then
+            buildozer init
+          fi
           sed -i 's/source.include_exts =.*/source.include_exts = py,mp3,kv,png,jpg,ttf/' buildozer.spec
           sed -i 's/requirements =.*/requirements = python3,kivy,plyer,gtts,requests,wikipedia/' buildozer.spec
           sed -i 's/# *android.api =.*/android.api = 33/' buildozer.spec
@@ -29,6 +50,10 @@ jobs:
           sed -i 's/source.main =.*/source.main = jarvis_app.py/' buildozer.spec
 
       - name: Build APK
+        env:
+          ANDROIDSDK: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
+          ANDROIDNDK: ${{ github.workspace }}/.buildozer/android/platform/android-ndk-r25b
+          ANDROID_HOME: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
         run: |
           buildozer android debug
 
